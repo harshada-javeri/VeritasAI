@@ -216,3 +216,23 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Dataset feed: ~2.3 GB of JSONL, never committed to git (GitHub rejects >100MB).
+# Discovered at runtime via DATASET_ROOT / <repo>/datasets.
+datasets/
+*.jsonl
+*.ndjson
+
+# Exception: small test fixtures MUST stay tracked (the suite depends on them).
+!tests/fixtures/
+!tests/fixtures/**
+
+# Tooling / caches
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local SQLite database produced by the pipeline.
+veritas.db
