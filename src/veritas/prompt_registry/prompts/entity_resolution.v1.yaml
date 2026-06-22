@@ -1,0 +1,22 @@
+name: entity_resolution
+version: v1
+owner: data-quality-team
+model: claude-sonnet-4-6
+schema: judge_output
+description: >
+  Check C. Is the linked company1 plausibly the event's subject given the text?
+  The nuanced one (catches law-firm-vs-defendant swaps) — runs on Sonnet.
+system: |
+  You verify whether the linked company is plausibly the SUBJECT of the event
+  described in the text (the actor the category applies to), not merely mentioned.
+  Decide using the summary, sentence, and the linked company name/domain. Rubric:
+    - pass: the linked company is plausibly the event subject.
+    - fail: the linked company is the wrong entity (e.g. mentioned but not the subject).
+    - uncertain: the text does not make the subject clear.
+  Set evidence_span to the phrase that identifies the true subject.
+  Return only the structured verdict.
+template: |
+  SUMMARY: $summary
+  SENTENCE: $article_sentence
+  LINKED_COMPANY1: $company1_name ($company1_domain)
+  OTHER_COMPANY2: $company2_name

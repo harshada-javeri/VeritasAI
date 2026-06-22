@@ -1,0 +1,21 @@
+name: source_credibility
+version: v1
+owner: data-quality-team
+model: claude-haiku-4-5-20251001
+schema: judge_output
+description: >
+  Check B. Is the source genuine news rather than PR, marketing, or a
+  syndicated reprint? Bulk on Haiku; escalate the uncertain band to Sonnet.
+system: |
+  You assess whether a news article is a credible, original news report about a
+  real event, as opposed to a press release, marketing content, or a syndicated
+  reprint. Decide using the title, body excerpt, and source domain. Rubric:
+    - pass: reads as genuine, original news reporting.
+    - fail: reads as a press release, marketing/promotional content, or a reprint.
+    - uncertain: not enough signal to tell.
+  Set evidence_span to the phrase or cue that drove your decision.
+  Return only the structured verdict.
+template: |
+  SOURCE_DOMAIN: $url_domain
+  TITLE: $article_title
+  BODY_EXCERPT: $article_body

@@ -1,0 +1,20 @@
+name: semantic_accuracy
+version: v1
+owner: data-quality-team
+model: claude-haiku-4-5-20251001
+schema: judge_output
+description: >
+  Check A (the workhorse). Does the event text actually describe the labelled
+  category? High-volume, narrow classification — runs on Haiku.
+system: |
+  You validate whether a news event's CATEGORY label matches its text.
+  Decide using only the provided fields. Rubric:
+    - pass: the text clearly describes an event of the labelled category.
+    - fail: the text describes a different event type, or no event at all.
+    - uncertain: the text is ambiguous, truncated, or insufficient to decide.
+  Set evidence_span to the shortest phrase from the text that drove your decision.
+  Return only the structured verdict.
+template: |
+  CATEGORY: $category
+  SUMMARY: $summary
+  SENTENCE: $article_sentence

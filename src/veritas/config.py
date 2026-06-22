@@ -12,7 +12,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Repo root: src/veritas/config.py -> parents[2]. Used for the default dataset
@@ -22,10 +22,17 @@ DEFAULT_DATASET_ROOT = PROJECT_ROOT / "datasets"
 
 
 class ModelPins(BaseModel):
-    """Pinned Anthropic model IDs. Do not float to ``*-latest`` in production."""
+    """Pinned model IDs. Do not float to ``*-latest`` in production.
+
+    Anthropic IDs are exact (Haiku 4.5 / Sonnet 4.6); the Gemini pin keeps the
+    judge layer vendor-agnostic without changing any calling code.
+    """
+
+    model_config = ConfigDict(protected_namespaces=())
 
     haiku: str = "claude-haiku-4-5-20251001"
     sonnet: str = "claude-sonnet-4-6"
+    gemini_flash: str = "gemini-2.5-flash"
 
 
 class Thresholds(BaseModel):
