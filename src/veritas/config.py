@@ -61,6 +61,19 @@ class EvalConfig(BaseModel):
     regression_threshold: float = Field(0.05, ge=0.0, le=1.0)
 
 
+class PipelineConfig(BaseModel):
+    """Pipeline orchestration knobs."""
+
+    clean_sample_rate: float = Field(0.20, ge=0.0, le=1.0)
+    """Fraction of rule-CLEAN events sampled into semantic LLM review."""
+
+    max_concurrency: int = Field(8, ge=1)
+    """Max events processed concurrently by the bounded async runner."""
+
+    escalation_checks: tuple[str, ...] = ("semantic_accuracy",)
+    """LLM checks run when an event escalates (rule REVIEW, or sampled CLEAN)."""
+
+
 class Settings(BaseSettings):
     """Top-level settings. Field names map to env vars (``dataset_root`` -> ``DATASET_ROOT``)."""
 
@@ -88,6 +101,7 @@ class Settings(BaseSettings):
     thresholds: Thresholds = Thresholds()
     cost: CostBudget = CostBudget()
     evals: EvalConfig = EvalConfig()
+    pipeline: PipelineConfig = PipelineConfig()
 
 
 @lru_cache(maxsize=1)
