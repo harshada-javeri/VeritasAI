@@ -10,6 +10,7 @@ whenever a check failed.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from datetime import datetime
 from enum import StrEnum
 from typing import Protocol, runtime_checkable
 
@@ -80,6 +81,19 @@ class RemediationProposal(BaseModel):
     auto_applicable: bool = False  # informational only; pipeline never acts on it
 
 
+class EventSnapshot(BaseModel):
+    """The minimal event projection needed to persist ``events_clean``."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    event_id: str
+    category: str | None = None
+    summary: str | None = None
+    found_at: datetime | None = None
+    company1_id: str | None = None
+    company2_id: str | None = None
+
+
 class EventOutcome(BaseModel):
     """The Final Verdict: the complete record of what happened to one event."""
 
@@ -87,6 +101,7 @@ class EventOutcome(BaseModel):
 
     event_id: str
     final_status: FinalStatus
+    snapshot: EventSnapshot | None = None  # event projection for events_clean
     rule_report: RuleReport | None = None
     llm_verdicts: list[Verdict] = Field(default_factory=list)
     routing: RoutingDecision | None = None
@@ -135,6 +150,7 @@ class VerdictSink(Protocol):
 
 @runtime_checkable
 class PipelineTraceSink(Protocol):
-    """Future monitoring seam (Phase 5). One trace row per finalized event."""
+    """Trace/persistence seam. One call per finalized event. Async so a
+    repository-backed sink can write to the database."""
 
-    def on_outcome(self, outcome: EventOutcome) -> None: ...
+    async def on_outcome(self, outcome: EventOutcome) -> None: ...

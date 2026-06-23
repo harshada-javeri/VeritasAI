@@ -16,6 +16,7 @@ from veritas.llm_gateway.budget import BudgetGuard
 from veritas.pipeline.contracts import (
     EscalationRouter,
     EventOutcome,
+    EventSnapshot,
     FinalStatus,
     RemediationProposal,
     Remediator,
@@ -97,6 +98,14 @@ class PipelineRunner:
         outcome = EventOutcome(
             event_id=event.event_id,
             final_status=final_status,
+            snapshot=EventSnapshot(
+                event_id=event.event_id,
+                category=event.category,
+                summary=event.summary,
+                found_at=event.found_at,
+                company1_id=event.company1_id,
+                company2_id=event.company2_id,
+            ),
             rule_report=report,
             llm_verdicts=llm_verdicts,
             routing=decision,
@@ -145,7 +154,7 @@ class PipelineRunner:
         if self._verdict_sink is not None:
             await self._verdict_sink.upsert_verdicts([*report.verdicts, *llm_verdicts])
         if self._trace_sink is not None:
-            self._trace_sink.on_outcome(outcome)
+            await self._trace_sink.on_outcome(outcome)
 
     # --- stream with bounded concurrency ---------------------------------- #
 
@@ -153,7 +162,7 @@ class PipelineRunner:
         if isinstance(item, ParseError):
             outcome = parse_error_outcome(item)
             if self._trace_sink is not None:
-                self._trace_sink.on_outcome(outcome)
+                await self._trace_sink.on_outcome(outcome)
             return outcome
         return await self.run_event(item)
 
