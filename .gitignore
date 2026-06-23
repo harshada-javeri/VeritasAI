@@ -240,3 +240,4 @@ __pycache__/
 
 # Local SQLite database produced by the pipeline.
 veritas.db
+.DS_Store
