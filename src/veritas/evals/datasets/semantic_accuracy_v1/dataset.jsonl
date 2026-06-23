@@ -1,0 +1,12 @@
+{"event": {"event_id": "sa-01", "category": "launches", "summary": "Acme launches CloudWidget", "article_sentence": "Acme today launched CloudWidget."}, "label": "pass", "note": null}
+{"event": {"event_id": "sa-02", "category": "hires", "summary": "Initech hires new CTO", "article_sentence": "Initech named Jane Doe as CTO."}, "label": "pass", "note": null}
+{"event": {"event_id": "sa-03", "category": "acquires", "summary": "BigCo acquires SmallCo", "article_sentence": "BigCo announced it acquired SmallCo."}, "label": "pass", "note": null}
+{"event": {"event_id": "sa-04", "category": "receives_financing", "summary": "Globex raises Series B", "article_sentence": "Globex raised $5M in Series B."}, "label": "pass", "note": null}
+{"event": {"event_id": "sa-05", "category": "partners_with", "summary": "Foo partners with Bar", "article_sentence": "Foo and Bar announced a partnership."}, "label": "pass", "note": null}
+{"event": {"event_id": "sa-06", "category": "launches", "summary": "Umbrella sues Hooli", "article_sentence": "Umbrella filed a lawsuit against Hooli."}, "label": "fail", "note": null}
+{"event": {"event_id": "sa-07", "category": "hires", "summary": "Initech lays off 200 staff", "article_sentence": "Initech cut 200 jobs this quarter."}, "label": "fail", "note": null}
+{"event": {"event_id": "sa-08", "category": "acquires", "summary": "Wayne invests in Stark", "article_sentence": "Wayne led a minority investment in Stark."}, "label": "fail", "note": null}
+{"event": {"event_id": "sa-09", "category": "receives_award", "summary": "Soylent named top employer", "article_sentence": "Soylent won a best-workplace award."}, "label": "pass", "note": null}
+{"event": {"event_id": "sa-10", "category": "partners_with", "summary": "Massive layoffs at Vandelay", "article_sentence": "Vandelay announced restructuring."}, "label": "fail", "note": null}
+{"event": {"event_id": "sa-11", "category": "is_developing", "summary": "Pied Piper working on new codec", "article_sentence": "Pied Piper is developing a codec."}, "label": "pass", "note": null}
+{"event": {"event_id": "sa-12", "category": "launches", "summary": "Report mentions Acme in passing", "article_sentence": "The article briefly notes Acme."}, "label": "uncertain", "note": null}

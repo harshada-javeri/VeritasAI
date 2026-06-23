@@ -54,6 +54,13 @@ class CostBudget(BaseModel):
     monthly_budget_usd: float = Field(500.0, gt=0.0)
 
 
+class EvalConfig(BaseModel):
+    """Evaluation thresholds. A tracked metric dropping more than this between
+    two prompt versions is a regression and fails the eval (non-zero exit)."""
+
+    regression_threshold: float = Field(0.05, ge=0.0, le=1.0)
+
+
 class Settings(BaseSettings):
     """Top-level settings. Field names map to env vars (``dataset_root`` -> ``DATASET_ROOT``)."""
 
@@ -80,6 +87,7 @@ class Settings(BaseSettings):
     models: ModelPins = ModelPins()
     thresholds: Thresholds = Thresholds()
     cost: CostBudget = CostBudget()
+    evals: EvalConfig = EvalConfig()
 
 
 @lru_cache(maxsize=1)

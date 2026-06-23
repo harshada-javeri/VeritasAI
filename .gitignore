@@ -217,15 +217,19 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Dataset feed: ~2.3 GB of JSONL, never committed to git (GitHub rejects >100MB).
-# Discovered at runtime via DATASET_ROOT / <repo>/datasets.
-datasets/
+# Dataset feed: ~2.3 GB of JSONL at the REPO ROOT, never committed (GitHub rejects >100MB).
+# Anchored with a leading slash so it matches only /datasets/, not a `datasets` dir
+# elsewhere (e.g. the packaged eval fixtures under src/veritas/evals/datasets/).
+/datasets/
 *.jsonl
 *.ndjson
 
-# Exception: small test fixtures MUST stay tracked (the suite depends on them).
+# Exceptions: small fixtures/sample data that MUST stay tracked (suite + evals depend on them).
+# Negations come after the *.jsonl glob so the data files are re-included.
 !tests/fixtures/
 !tests/fixtures/**
+!src/veritas/evals/datasets/
+!src/veritas/evals/datasets/**
 
 # Tooling / caches
 .venv/

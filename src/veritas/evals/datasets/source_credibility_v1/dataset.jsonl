@@ -1,0 +1,10 @@
+{"event": {"event_id": "sc-01", "category": "launches", "summary": "TechCrunch: Acme ships Widget", "article_sentence": "Independent reporting on the launch."}, "label": "pass", "note": null}
+{"event": {"event_id": "sc-02", "category": "launches", "summary": "PRNewswire: Acme proud to announce Widget", "article_sentence": "Press release distributed by Acme."}, "label": "fail", "note": null}
+{"event": {"event_id": "sc-03", "category": "receives_award", "summary": "Local paper covers Soylent award", "article_sentence": "Original local reporting."}, "label": "pass", "note": null}
+{"event": {"event_id": "sc-04", "category": "partners_with", "summary": "Sponsored: Foo x Bar synergy", "article_sentence": "Sponsored content promoting the deal."}, "label": "fail", "note": null}
+{"event": {"event_id": "sc-05", "category": "acquires", "summary": "Reuters: BigCo buys SmallCo", "article_sentence": "Wire service report."}, "label": "pass", "note": null}
+{"event": {"event_id": "sc-06", "category": "hires", "summary": "Company blog: We welcome our new CTO", "article_sentence": "Company-authored blog post."}, "label": "fail", "note": null}
+{"event": {"event_id": "sc-07", "category": "is_developing", "summary": "Ars Technica deep-dive on codec", "article_sentence": "In-depth independent analysis."}, "label": "pass", "note": null}
+{"event": {"event_id": "sc-08", "category": "launches", "summary": "Syndicated reprint of Acme release", "article_sentence": "Reprinted press release."}, "label": "fail", "note": null}
+{"event": {"event_id": "sc-09", "category": "goes_public", "summary": "Bloomberg: Globex IPO prices", "article_sentence": "Financial wire reporting."}, "label": "pass", "note": null}
+{"event": {"event_id": "sc-10", "category": "partners_with", "summary": "Unclear blogspot post on Foo-Bar", "article_sentence": "Ambiguous low-signal post."}, "label": "uncertain", "note": null}

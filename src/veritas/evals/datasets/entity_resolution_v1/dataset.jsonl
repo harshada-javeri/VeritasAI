@@ -1,0 +1,10 @@
+{"event": {"event_id": "er-01", "category": "acquires", "summary": "BigCo acquires SmallCo", "article_sentence": "BigCo acquired SmallCo."}, "label": "pass", "note": null}
+{"event": {"event_id": "er-02", "category": "files_suit_against", "summary": "Law firm Dewey represents Acme v. Hooli", "article_sentence": "Dewey filed on behalf of Acme."}, "label": "fail", "note": null}
+{"event": {"event_id": "er-03", "category": "hires", "summary": "Initech hires CTO", "article_sentence": "Initech hired a CTO."}, "label": "pass", "note": null}
+{"event": {"event_id": "er-04", "category": "partners_with", "summary": "Foo partners with Bar", "article_sentence": "Foo partnered with Bar."}, "label": "pass", "note": null}
+{"event": {"event_id": "er-05", "category": "acquires", "summary": "Advisor BankCo on Stark-Wayne deal", "article_sentence": "BankCo advised on the deal."}, "label": "fail", "note": null}
+{"event": {"event_id": "er-06", "category": "launches", "summary": "Acme launches Widget", "article_sentence": "Acme launched Widget."}, "label": "pass", "note": null}
+{"event": {"event_id": "er-07", "category": "receives_financing", "summary": "Globex raises round led by VC Sequoia", "article_sentence": "Sequoia led Globex's round."}, "label": "pass", "note": null}
+{"event": {"event_id": "er-08", "category": "merges_with", "summary": "A merges with B", "article_sentence": "A and B merged."}, "label": "pass", "note": null}
+{"event": {"event_id": "er-09", "category": "recognized_as", "summary": "Trade group names Soylent leader", "article_sentence": "Soylent was recognized."}, "label": "uncertain", "note": null}
+{"event": {"event_id": "er-10", "category": "acquires", "summary": "Reuters reports Wayne buys Kord", "article_sentence": "Wayne acquired Kord."}, "label": "pass", "note": null}
