@@ -10,12 +10,16 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from veritas.domain.models import CheckType, Verdict, VerdictStatus
 from veritas.store.models import EventCleanRow, QualityVerdictRow, TraceLogRow
+
+if TYPE_CHECKING:
+    from veritas.monitoring.logging import PipelineLogger
 
 
 def _now() -> datetime:
@@ -25,8 +29,13 @@ def _now() -> datetime:
 class EventRepository:
     """``events_clean`` — one row per event, keyed by ``event_id`` (upsert)."""
 
-    def __init__(self, sessionmaker: async_sessionmaker[AsyncSession]) -> None:
+    def __init__(
+        self,
+        sessionmaker: async_sessionmaker[AsyncSession],
+        logger: PipelineLogger | None = None,
+    ) -> None:
         self._sm = sessionmaker
+        self._logger = logger
 
     async def upsert(
         self,
@@ -62,6 +71,8 @@ class EventRepository:
                 row.company2_id = company2_id
                 row.status = status
                 row.updated_at = _now()
+        if self._logger is not None:
+            self._logger.log("event_upserted", event_id=event_id, status=status)
 
     async def get(self, event_id: str) -> EventCleanRow | None:
         async with self._sm() as session:
@@ -75,8 +86,13 @@ class EventRepository:
 class VerdictRepository:
     """``quality_verdicts`` — idempotent on (event_id, check_name, prompt_version, model)."""
 
-    def __init__(self, sessionmaker: async_sessionmaker[AsyncSession]) -> None:
+    def __init__(
+        self,
+        sessionmaker: async_sessionmaker[AsyncSession],
+        logger: PipelineLogger | None = None,
+    ) -> None:
         self._sm = sessionmaker
+        self._logger = logger
 
     async def upsert_verdicts(self, verdicts: Sequence[Verdict]) -> None:
         async with self._sm() as session, session.begin():
@@ -95,6 +111,8 @@ class VerdictRepository:
                     session.add(self._to_row(verdict, prompt_version, model))
                 else:
                     self._apply(existing, verdict)  # created_at unchanged (first write wins)
+        if self._logger is not None:
+            self._logger.log("verdicts_upserted", count=len(verdicts))
 
     async def list_for_event(self, event_id: str) -> list[Verdict]:
         async with self._sm() as session:
@@ -167,8 +185,13 @@ class VerdictRepository:
 class TraceRepository:
     """``trace_logs`` — append-only audit trail (one row per stage emission)."""
 
-    def __init__(self, sessionmaker: async_sessionmaker[AsyncSession]) -> None:
+    def __init__(
+        self,
+        sessionmaker: async_sessionmaker[AsyncSession],
+        logger: PipelineLogger | None = None,
+    ) -> None:
         self._sm = sessionmaker
+        self._logger = logger
 
     async def append(
         self, *, event_id: str, trace_id: str, stage: str, payload_hash: str
@@ -183,6 +206,8 @@ class TraceRepository:
                     created_at=_now(),
                 )
             )
+        if self._logger is not None:
+            self._logger.log("trace_appended", event_id=event_id, stage=stage)
 
     async def list_for_event(self, event_id: str) -> list[TraceLogRow]:
         async with self._sm() as session:

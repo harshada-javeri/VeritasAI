@@ -10,9 +10,15 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator, Iterable
+from typing import TYPE_CHECKING
 
 from veritas.domain.models import ParseError, ResolvedEvent, Verdict, VerdictStatus
 from veritas.llm_gateway.budget import BudgetGuard
+from veritas.monitoring.events import LLMExecution, OutcomeRecorded
+
+if TYPE_CHECKING:
+    from veritas.monitoring.logging import PipelineLogger
+    from veritas.monitoring.sinks import MetricsSink
 from veritas.pipeline.contracts import (
     EscalationRouter,
     EventOutcome,
@@ -58,6 +64,8 @@ class PipelineRunner:
         max_concurrency: int = 8,
         verdict_sink: VerdictSink | None = None,
         trace_sink: TraceSink | None = None,
+        metrics: MetricsSink | None = None,
+        logger: PipelineLogger | None = None,
     ) -> None:
         if max_concurrency < 1:
             raise ValueError("max_concurrency must be >= 1")
@@ -71,6 +79,8 @@ class PipelineRunner:
         self._max_concurrency = max_concurrency
         self._verdict_sink = verdict_sink
         self._trace_sink = trace_sink
+        self._metrics = metrics
+        self._logger = logger
 
     # --- single event ----------------------------------------------------- #
 
@@ -117,7 +127,32 @@ class PipelineRunner:
             error=error,
         )
         await self._emit(outcome, report, llm_verdicts)
+        self._observe(outcome)
         return outcome
+
+    def _observe(self, outcome: EventOutcome) -> None:
+        if self._metrics is not None:
+            for verdict in outcome.llm_verdicts:
+                self._metrics.on_llm(LLMExecution.from_verdict(verdict))
+            escalated = (
+                outcome.routing is not None and outcome.routing.action is RouteAction.ESCALATE
+            )
+            self._metrics.on_outcome(
+                OutcomeRecorded(
+                    event_id=outcome.event_id,
+                    final_status=outcome.final_status.value,
+                    escalated=escalated,
+                    cost_usd=outcome.total_cost_usd,
+                )
+            )
+        if self._logger is not None:
+            self._logger.log(
+                "event_finalized",
+                event_id=outcome.event_id,
+                status=outcome.final_status.value,
+                cost_usd=outcome.total_cost_usd,
+                llm_checks=len(outcome.llm_verdicts),
+            )
 
     def _finalize(
         self,
@@ -163,6 +198,7 @@ class PipelineRunner:
             outcome = parse_error_outcome(item)
             if self._trace_sink is not None:
                 await self._trace_sink.on_outcome(outcome)
+            self._observe(outcome)
             return outcome
         return await self.run_event(item)
 

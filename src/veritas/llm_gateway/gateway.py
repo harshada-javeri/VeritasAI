@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable, Mapping
+from typing import TYPE_CHECKING
 
 from veritas.config import Settings, get_settings
 from veritas.llm_gateway.budget import BudgetGuard
-from veritas.llm_gateway.errors import ModelNotPinnedError
+from veritas.llm_gateway.errors import LLMError, ModelNotPinnedError
 from veritas.llm_gateway.pricing import PricingTable
 from veritas.llm_gateway.providers import (
     AnthropicClient,
@@ -24,6 +25,10 @@ from veritas.llm_gateway.providers import (
 )
 from veritas.llm_gateway.retry import RetryPolicy, with_retry
 from veritas.llm_gateway.types import LLMRequest, LLMResponse
+from veritas.monitoring.events import ProviderCall
+
+if TYPE_CHECKING:
+    from veritas.monitoring.sinks import MetricsSink
 
 
 def provider_for_model(model: str) -> str:
@@ -47,6 +52,7 @@ class LLMGateway:
         pricing: PricingTable | None = None,
         retry: RetryPolicy | None = None,
         clock: Callable[[], float] = time.perf_counter,
+        metrics: MetricsSink | None = None,
     ) -> None:
         self._clients = dict(clients)
         self._pinned = set(pinned_models)
@@ -54,6 +60,7 @@ class LLMGateway:
         self._pricing = pricing if pricing is not None else PricingTable()
         self._retry = retry if retry is not None else RetryPolicy()
         self._clock = clock
+        self._metrics = metrics
 
     @property
     def budget(self) -> BudgetGuard:
@@ -71,8 +78,24 @@ class LLMGateway:
 
         self._budget.ensure_available()
         start = self._clock()
-        result = await with_retry(self._retry, lambda: client.complete(request))
+        try:
+            result = await with_retry(self._retry, lambda: client.complete(request))
+        except LLMError as exc:
+            if self._metrics is not None:
+                self._metrics.on_provider_call(
+                    ProviderCall(
+                        provider=provider,
+                        model=request.model,
+                        ok=False,
+                        error_type=type(exc).__name__,
+                    )
+                )
+            raise
         latency_ms = (self._clock() - start) * 1000.0
+        if self._metrics is not None:
+            self._metrics.on_provider_call(
+                ProviderCall(provider=provider, model=request.model, ok=True)
+            )
 
         cost = self._pricing.cost(request.model, result.input_tokens, result.output_tokens)
         self._budget.record(cost)
