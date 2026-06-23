@@ -11,6 +11,7 @@ dependencies = [
     "pyyaml>=6.0",
     "sqlalchemy[asyncio]>=2.0",
     "aiosqlite>=0.20",
+    "streamlit>=1.36",
 ]
 
 [dependency-groups]
@@ -66,6 +67,26 @@ warn_unreachable = true
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
+
+# Streamlit ships no strict-clean types; force it to Any everywhere so the gate
+# does not depend on its (untyped) surface. Logic layers never import it.
+[[tool.mypy.overrides]]
+module = ["streamlit"]
+ignore_missing_imports = true
+follow_imports = "skip"
+
+# UI layers (only these import streamlit). Logic layers — repositories, services,
+# viewmodels — remain fully strict. The relaxations below are exactly the strict
+# sub-checks that streamlit's untyped decorators/calls trip, and nothing more.
+[[tool.mypy.overrides]]
+module = [
+    "veritas.dashboard.app",
+    "veritas.dashboard.pages.*",
+    "veritas.dashboard.components.*",
+]
+disallow_untyped_decorators = false
+disallow_untyped_calls = false
+warn_return_any = false
 
 # --- Pytest --------------------------------------------------------------
 [tool.pytest.ini_options]
