@@ -1,9 +1,167 @@
 # VeritasAI
 AI-Native Data Quality Platform for News Event Intelligence using Rules, LLM Evaluation, and Agentic Remediation.
 
+> **In one line:** Rules gate, LLMs judge, humans backstop — and every decision is logged, versioned,
+> costed, and measured. Validates ~620K news-event records that downstream teams consume as truth.
+
+**Status:** Phases 0–7 complete · **157 tests passing** · MyPy strict clean (115 files) · Ruff clean · eval gate green.
+
+---
+
+# Quickstart (for reviewers)
+
+Goal: a working system in **under five minutes**, **zero API keys, zero spend**. Everything below
+runs fully offline against replay fixtures and a deterministic synthetic demo database.
+
+**Prerequisites:** Python 3.12 and [`uv`](https://docs.astral.sh/uv/) (`curl -LsSf https://astral.sh/uv/install.sh | sh`).
+
+```bash
+# 1. Clone & install (uv creates the venv and resolves the lockfile)
+git clone <repo-url> veritas-ai && cd veritas-ai
+uv sync
+
+# 2. (Optional) configure — only needed to point at the real feed or live models.
+#    Every gate, eval, and the demo dashboard below run WITHOUT this step.
+cp .env.example .env        # then set DATASET_ROOT if you have the feed
+
+# 3. Verify the build is green (Ruff + MyPy strict + 157 tests)
+make check
+
+# 4. Run the evaluation harness (replay-only, $0) — precision/recall/F1 + regression gate
+make eval                   # exits non-zero if a tracked metric regressed
+
+# 5. See the dashboard with data — seed a deterministic synthetic demo DB, then launch
+uv run python scripts/seed_demo_db.py
+DATABASE_URL="sqlite+aiosqlite:///./veritas-demo.db" \
+    uv run streamlit run src/veritas/dashboard/app.py
+```
+
+**What you should see**
+
+| Step | Expected result |
+|---|---|
+| `make check` | `All checks passed!` · `Success: no issues found in 115 source files` · `157 passed` |
+| `make eval` | Per-check P/R/F1 table, worst-failure dump, and `no regression` → exit `0` |
+| dashboard | All 7 workspaces populated (≈168 demo events) at <http://localhost:8501> |
+
+**Reproduce the committed results:** the numbers in [docs/eval-results.md](docs/eval-results.md) come
+straight from `make eval` over the replay fixtures in `src/veritas/evals/datasets/` — re-run it and you
+get the same figures (replay is deterministic). The demo DB is also deterministic (fixed RNG seed), so
+the dashboard looks identical on every machine.
+
+> **Running against the real feed / live models** is optional and not needed to review the system.
+> Point `DATASET_ROOT` at the JSONL feed and drive `PipelineRunner` over it (the storage sinks write
+> `./veritas.db`; see [docs/pipeline-design.md](docs/pipeline-design.md)) to populate the dashboard from
+> real records; live LLM judges additionally require an Anthropic API key. The default `ReplayJudge`
+> path — which everything above uses — needs neither a feed nor a key.
+
+---
+
+# Architecture Overview
+
+Layered, each layer depending only on lower ones — dependency injection throughout, every boundary a
+typed Protocol:
+
+```
+ingest → rules (gate) → pipeline (routing → escalation → remediation → finalize)
+                              │            │
+                          judges ── llm_gateway (pin/route/retry/cost/budget)
+                              │            │
+                       prompt_registry   monitoring (metrics/logging/alerts)
+                              │
+                            store (SQLAlchemy)        evals (replay-backed)
+```
+
+A record's path: **ingest** (tolerant JSON:API parse) → **rule triage** (free, on 100% of records;
+hard fail → quarantine, no spend) → **LLM escalation** (only what rules can't settle; cheap judge
+first, escalate the *uncertain* check to the stronger model) → **remediation** (proposal-only) →
+**store + observe** (every call traced) → **dashboard** (read-only). Stack: Python 3.12, Pydantic v2,
+async SQLAlchemy 2.0, `uv`, MyPy strict, Ruff. Develops and tests fully offline against a `ReplayJudge`
+(zero live spend).
+
+# Design Principles
+
+- **Reach for a rule first.** Reach for an LLM only when the question is semantic, contextual, or
+  fuzzy — and when you do, measure the judge before you trust it.
+- **Single `Verdict` currency** for rules and LLM judges → uniform storage, routing, and tracing.
+- **Tolerant parser, validating rules** — the parser never rejects content problems; rules flag them.
+- **Pinned model IDs** (never `*-latest`) and **structured output only** — reproducible, parseable.
+- **Tiered escalation** — escalate only the uncertain check, never the whole event. The cost lever.
+- **Fail-safe routing** — every ambiguity or error biases toward human REVIEW, never silent pass.
+- **Remediation is proposal-only** — the system suggests and explains; a human approves.
+- **Optional, no-op-by-default seams** — the pipeline runs in-memory without storage or monitoring.
+- **Replay everywhere** — evals and pipeline tests run offline and deterministically, for $0.
+
+# Production Readiness Review
+
+An independent board (Principal Engineer, Staff AI Platform Engineer, SRE, Security) assessed the repo.
+Verdict: **a 9/10 design wearing a 3/10 production surface — and it knows it.** This is a
+production-shaped reference implementation that would *promote* to production without an architectural
+rewrite; the remaining work is operational, not structural.
+
+- **Strengths:** clean hexagonal layering, determinism as architecture (replay, idempotent writes,
+  pinned models), engineered cost control, uncompromising hygiene, fails safe toward human review.
+- **Scoped-out gaps (the roadmap):** the live path has never run; state is in-process; replay
+  re-spends; no operational plane (CI/CD, alert delivery, telemetry export); security hardening
+  (secrets, prompt injection, PII/retention) is unaddressed.
+
+Full detail: [docs/PRODUCTION_READINESS_REVIEW.md](docs/PRODUCTION_READINESS_REVIEW.md).
+
+# Dashboard
+
+A read-only **Decision Intelligence Console** (Streamlit) over the storage layer, with strict layering
+(repository → service → view-model → component → page) and no business logic in the UI. Seven
+workspaces: **Trust Center** (transparent quality index — shows the formula, not a magic number),
+**Cost & Efficiency**, **Data Quality Intelligence**, **Human Review** (the ambiguous-decision queue
+with judge reasoning + evidence), **Platform Health**, **AI Judge Performance** (eval scorecards with
+honest small-sample warnings), and an **Event Detail** drill-down — every aggregate links down to a
+single event's full verdict stack, trace, and cost. Run: `uv run streamlit run src/veritas/dashboard/app.py`.
+
+To see it populated with no API keys or feed, seed the deterministic demo database first
+(`uv run python scripts/seed_demo_db.py`, then set `DATABASE_URL` per the [Quickstart](#quickstart-for-reviewers)).
+A per-workspace description, example insights, and a one-command capture process live in
+[screenshots/README.md](screenshots/README.md) — screenshots are produced locally and not committed
+(no fabricated images).
+
+# Stakeholder Feedback Incorporated
+
+Firmable's review gave three priorities — each **validated a decision already in the build**:
+
+1. **Precision > coverage** → confirmed by fail-safe-to-REVIEW routing and proposal-only remediation;
+   we now optimize and gate on **precision** explicitly.
+2. **Humans own ambiguous decisions** → confirmed by the founding "humans backstop" principle; the
+   review queue is the product's center of gravity, not a fallback.
+3. **Source-level drift > aggregate trends** → confirmed by existing source lineage and the
+   source-credibility judge; *source* is being promoted to the primary axis of analysis.
+
+Full analysis: [docs/STAKEHOLDER_FEEDBACK_INTEGRATION.md](docs/STAKEHOLDER_FEEDBACK_INTEGRATION.md).
+
+# Roadmap
+
+**Phase 8 — Source Intelligence & Root-Cause** (direct from the feedback above):
+
+- **Source intelligence** — aggregate verdicts, cost, and outcomes *by source/vendor/domain*; a
+  transparent per-vendor quality score.
+- **Source-level drift detection** — extend the canary discipline from model/prompt drift to *source*
+  drift; alerts name the source and the moment ("vendor X degraded starting June 18").
+- **Human review workflow** — evolve the queue into a diagnosis-and-ownership surface; every ambiguous
+  decision gets a named owner and full context.
+- **Metrics history** — a durable daily rollup so quality becomes attributable over time, by source.
+
+Beyond Phase 8: prove the live path, externalize state (Postgres/Redis), close the replay-respend gap,
+deliver alerts/telemetry, harden security. See [docs/EXECUTIVE_OVERVIEW.md](docs/EXECUTIVE_OVERVIEW.md).
+
+# How this was built
+
+A first-person account of the architecture approach, the phased build process, the AI tooling used
+(Claude Code), which decisions were human-owned vs. AI-assisted, the hardest problems, and what I'd
+change: [docs/HOW_I_BUILT_THIS.md](docs/HOW_I_BUILT_THIS.md).
+
+---
+
 # AI-Native Data Quality System — News Events Dataset
 
-**Technical design & build guide**
+**Technical design & build guide** *(full reference below)*
 *Author: Senior AI/ML Engineer · Audience: data team, reviewer*
 
 ---
