@@ -44,10 +44,25 @@ any code in a phase:
 - **Phase 4** — pipeline orchestration (routing, tiered escalation, proposal-only remediation).
 - **Phase 5–6** — async SQLAlchemy storage and the monitoring/observability framework.
 - **Phase 7** — the read-only Streamlit Decision Intelligence Console.
+- **Phase 8 (designed, not yet built)** — [Source Drift Intelligence](source-drift-intelligence.md):
+  promote *source* from an input field to the primary axis of quality, cost, and drift analysis. This
+  came directly out of the [Firmable stakeholder feedback](STAKEHOLDER_FEEDBACK_INTEGRATION.md) and is
+  written up as a full, dependency-ordered phase that aggregates over data the platform already
+  produces — no contract breaks.
 
 Every phase landed MyPy-strict-clean, Ruff-clean, and fully tested before the next began. The repo is at
 **157 tests** today. The discipline of "no placeholders, no toy code, stop for review" kept the codebase
 honest — there's no dead scaffolding waiting to be filled in.
+
+Two other artifacts landed alongside the phases. First, the core loop is packaged as two
+**renderer-agnostic agent skills** under [`skills/`](../skills/) —
+[`news-events-quality-check`](../skills/news-events-quality-check/SKILL.md) (rules-gate → LLM-judge →
+human-backstop, returning per-check verdicts + a rollup) and
+[`news-events-remediation`](../skills/news-events-remediation/SKILL.md) (propose-only fixes). They
+specify the *same* precedence logic the pipeline runs, so a notebook, CI job, or agent loop and the
+batch pipeline can never disagree. Second, the eval harness earned its keep: `semantic_accuracy` was
+promoted **v1 → v2** *through* the regression gate (see [eval-results.md](eval-results.md)), which is
+the prompt-versioning machinery doing exactly what it was built for rather than sitting unused.
 
 The most valuable early step was **profiling the real feed before writing a single rule.** The data
 contradicted my own design doc: 620K records (not 310K), 29 categories (not 40+), `amount` present in
@@ -66,6 +81,10 @@ I'll be direct about this, because Firmable asks for it and because it's the hon
 - **The `ReplayJudge` pattern is itself an AI-tooling decision** — it let me develop and test the entire
   LLM layer against recorded fixtures with zero live spend, which is how the whole thing was buildable in
   a weekend without burning a budget.
+- **Packaging the loop as agent skills** — the two `skills/` specs are deliberately AI-native: a portable,
+  versioned description of the quality-check and remediation behavior that an agent (or a human, or CI)
+  can load and run, decoupled from any one renderer. The skill *is* the contract; the pipeline is one
+  caller of it.
 
 What AI tooling did *not* do: make the load-bearing judgment calls. Those were mine.
 
@@ -124,8 +143,11 @@ themselves came from understanding the data and the problem.
 - **Wire alert *delivery*** — the `AlertEvaluator` computes alerts but routes them nowhere yet.
 - **Expand the eval sets to ≥30 examples per check** with a second labeller and an agreement score, to
   move the judges from "directed" toward "certified."
-- **Promote source to a first-class analysis axis** — this is exactly the Phase 8 direction the Firmable
-  feedback pointed at, and the architecture already carries source lineage to support it.
+- **Build Phase 8 — source as a first-class analysis axis.** This is now past "direction": it's a
+  written, dependency-ordered design ([source-drift-intelligence.md](source-drift-intelligence.md)) that
+  turns the Firmable mandate — *which feed is degrading, and when* — into vendor quality scoring, source
+  trust tiers, and source-attributed drift detection. The architecture already carries the source lineage
+  to support it; what remains is the aggregation-and-detection layer on top.
 
 ## Lessons learned
 

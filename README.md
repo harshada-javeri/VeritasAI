@@ -4,7 +4,7 @@ AI-Native Data Quality Platform for News Event Intelligence using Rules, LLM Eva
 > **In one line:** Rules gate, LLMs judge, humans backstop — and every decision is logged, versioned,
 > costed, and measured. Validates ~620K news-event records that downstream teams consume as truth.
 
-**Status:** Phases 0–7 complete · **157 tests passing** · MyPy strict clean (115 files) · Ruff clean · eval gate green.
+**Status:** Phases 0–7 complete · **157 tests passing** · MyPy strict clean (116 files) · Ruff clean · eval gate green.
 
 ---
 
@@ -356,13 +356,13 @@ for each record in batch:
 
 This is what separates AI-*native* from AI-*assisted*.
 
-**Eval harness** — one command (`make eval` / `python evals/run.py`) that:
+**Eval harness** — one command (`make eval`, i.e. `uv run python -m veritas.evals`) that:
 - re-runs every LLM check against its labelled set,
 - reports precision/recall/accuracy per check,
 - diffs against the previous prompt version (regression gate),
 - exits non-zero if any metric drops beyond a threshold → wire into CI.
 
-**Prompt versioning** — prompts live as files in `prompts/` with a version header (`semantic_accuracy.v3.txt`). Every trace row records which version produced it, so v1-vs-v2 comparison is a `GROUP BY prompt_version` over the trace log.
+**Prompt versioning** — prompts live as versioned YAML files in `src/veritas/prompt_registry/prompts/` (e.g. `semantic_accuracy.v1.yaml`), each with a `version:` header. Every trace row records which version produced it, so v1-vs-v2 comparison is a `GROUP BY prompt_version` over the trace log.
 
 **Tracing schema** (one row per LLM call — JSONL or SQLite):
 
@@ -456,7 +456,7 @@ CREATE TABLE quality_metrics_daily ( -- pre-aggregated for the dashboard
 Phased so each phase ships something usable.
 
 **Phase 0 — Foundations (day 1)**
-- Repo layout: `eda/ rules/ llm_checks/ prompts/ evals/ skills/ pipeline/ sql/ monitoring/ dashboard/ README.md`.
+- Repo layout *(as built)*: `src/veritas/{ingest,rules,judges,prompt_registry,llm_gateway,evals,pipeline,store,monitoring,dashboard}/` with `scripts/`, `skills/`, `tests/`, `docs/`, and `datasets/` at the root. (The original sketch used top-level `eda/`/`sql/`; those were folded into `scripts/profile_dataset.py` and the SQLAlchemy models in `store/`.)
 - A flat parser: JSON:API line → clean record + resolved entities. Stream line-by-line (never load 100 MB into memory).
 - Config file pinning **exact model IDs**, thresholds, and the cost budget.
 

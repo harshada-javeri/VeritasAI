@@ -1,0 +1,10 @@
+# Dashboard runtime config.
+#
+# The dashboard is a SINGLE-page app: navigation is the "Workspace" radio in the
+# sidebar (see src/veritas/dashboard/app.py). The modules under
+# src/veritas/dashboard/pages/ are imported by app.py as render helpers — they are
+# NOT standalone Streamlit pages. Streamlit would otherwise auto-detect that
+# pages/ directory and render an unwanted top-of-sidebar page list, so we disable
+# the automatic multipage navigation here.
+[client]
+showSidebarNavigation = false

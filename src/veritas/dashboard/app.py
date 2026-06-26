@@ -31,6 +31,7 @@ from veritas.dashboard.repositories import (
     VerdictRepository,
     build_read_sessionmaker,
     create_read_engine,
+    ensure_schema,
 )
 from veritas.dashboard.services import (
     CostService,
@@ -55,6 +56,7 @@ class Console:
 
     def __init__(self, settings: Settings) -> None:
         engine = create_read_engine(settings.database_url)
+        ensure_schema(engine)  # materialize empty tables so an unseeded DB renders, not crashes
         sm = build_read_sessionmaker(engine)
         events = EventRepository(sm)
         verdicts = VerdictRepository(sm)

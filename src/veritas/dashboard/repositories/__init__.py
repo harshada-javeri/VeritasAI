@@ -13,6 +13,7 @@ from veritas.dashboard.repositories.base import (
     MetaRepository,
     build_read_sessionmaker,
     create_read_engine,
+    ensure_schema,
     to_sync_url,
 )
 from veritas.dashboard.repositories.cost_repository import CostRepository
@@ -30,5 +31,6 @@ __all__ = [
     "VerdictRepository",
     "build_read_sessionmaker",
     "create_read_engine",
+    "ensure_schema",
     "to_sync_url",
 ]

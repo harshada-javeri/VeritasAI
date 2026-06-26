@@ -11,6 +11,7 @@ from __future__ import annotations
 from sqlalchemy import Engine, create_engine, func, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from veritas.store.base import Base
 from veritas.store.models import QualityVerdictRow, TraceLogRow
 
 _ASYNC_TO_SYNC = {
@@ -35,6 +36,18 @@ def to_sync_url(url: str) -> str:
 def create_read_engine(url: str, *, echo: bool = False) -> Engine:
     """A sync engine for the dashboard. Accepts an async or sync URL."""
     return create_engine(to_sync_url(url), echo=echo)
+
+
+def ensure_schema(engine: Engine) -> None:
+    """Create the storage tables if they don't exist yet — idempotent.
+
+    The dashboard is read-only with respect to *data*, but a brand-new or
+    never-run database has no schema at all, so the first query raises
+    ``no such table``. Materializing the (empty) tables lets every page render
+    its "no data yet" state instead of crashing. On a populated database this is
+    a no-op: ``create_all`` only creates missing tables and writes no rows.
+    """
+    Base.metadata.create_all(engine)
 
 
 def build_read_sessionmaker(engine: Engine) -> sessionmaker[Session]:
