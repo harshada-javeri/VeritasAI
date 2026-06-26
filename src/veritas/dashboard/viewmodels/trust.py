@@ -39,3 +39,4 @@ class TrustCenterVM(VM):
     judge_confidence: DistributionVM
     drivers: tuple[DriverVM, ...] = ()
     banner: Band
+    headline: str = ""  # one-line plain-English explanation under the hero score

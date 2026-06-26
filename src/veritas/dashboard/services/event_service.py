@@ -10,11 +10,15 @@ from veritas.dashboard.services import formatting as fmt
 from veritas.dashboard.services.scoring import band_for_status
 from veritas.dashboard.viewmodels.common import Band, MoneyVM
 from veritas.dashboard.viewmodels.event_detail import (
+    DecisionVM,
     EventDetailVM,
     EventHeaderVM,
     TraceRowVM,
     VerdictRowVM,
 )
+
+# Worst-wins precedence used to find the verdict that decided the final state.
+_PRECEDENCE = {"fail": 2, "uncertain": 1, "review": 1, "pass": 0}
 
 
 class EventService:
@@ -54,6 +58,7 @@ class EventService:
             event_id=event_id,
             found=True,
             header=header,
+            decision=self._decision(header_dto.status, verdict_dtos),
             verdicts=tuple(self._verdict_row(v) for v in verdict_dtos),
             trace=tuple(
                 TraceRowVM(
@@ -66,6 +71,60 @@ class EventService:
             ),
             cost_summary=MoneyVM(value_usd=total_cost, display=fmt.money(total_cost)),
         )
+
+    def _decision(self, status: str, verdicts: list[VerdictDTO]) -> DecisionVM:
+        rules = [v for v in verdicts if v.check_type == "rule"]
+        llms = [v for v in verdicts if v.check_type == "llm"]
+        escalated = bool(llms)
+        worst_rule = self._worst(rules)
+        worst_llm = self._worst(llms)
+
+        # The verdict that decided the outcome: the worst across the whole stack.
+        key = self._worst(verdicts)
+        if key is not None and key.status == "fail":
+            rationale = (
+                f"Quarantined by rule `{key.check_name}` — {key.reason}. "
+                f"No LLM spend (the triage gate stops here)."
+            )
+        elif key is not None and key.status in {"uncertain", "review"}:
+            owner = "LLM judge" if key.check_type == "llm" else "rule"
+            rationale = (
+                f"Routed to human review: {owner} `{key.check_name}` was uncertain"
+                f"{f' ({fmt.pct(key.confidence)})' if key.confidence is not None else ''} — "
+                f"a person owns this call."
+            )
+        else:
+            rationale = "Clean: every rule and judge passed; safe to consume downstream."
+
+        return DecisionVM(
+            final_status=status,
+            band=Band(severity=band_for_status(status), reason=f"event is {status}"),
+            rationale=rationale,
+            escalated=escalated,
+            escalated_display=(
+                "Yes — escalated to LLM judges" if escalated else "No — settled by rules at $0"
+            ),
+            rule_outcome=self._outcome_label(worst_rule, none="no rule verdicts"),
+            llm_outcome=self._outcome_label(worst_llm, none="not escalated"),
+            key_check=key.check_name if key else "—",
+            key_confidence=(
+                fmt.pct(key.confidence) if key and key.confidence is not None else "—"
+            ),
+            key_model=(key.model or "—") if key else "—",
+            key_prompt_version=(key.prompt_version or "—") if key else "—",
+            key_cost=(fmt.money(key.cost_usd) if key and key.cost_usd is not None else "—"),
+            key_latency=fmt.latency_ms(key.latency_ms) if key else "—",
+        )
+
+    @staticmethod
+    def _worst(verdicts: list[VerdictDTO]) -> VerdictDTO | None:
+        return max(verdicts, key=lambda v: _PRECEDENCE.get(v.status, 0), default=None)
+
+    @staticmethod
+    def _outcome_label(v: VerdictDTO | None, *, none: str) -> str:
+        if v is None:
+            return none
+        return f"{v.status} · {v.check_name}"
 
     @staticmethod
     def _verdict_row(v: VerdictDTO) -> VerdictRowVM:

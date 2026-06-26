@@ -13,6 +13,7 @@ from veritas.dashboard.viewmodels.quality import (
     CategoryFailureVM,
     QualityIntelligenceVM,
     RuleStatVM,
+    SourceDriftVM,
 )
 
 
@@ -52,6 +53,33 @@ class QualityService:
                 for c in cat_failures
             ),
             confidence_by_check=conf_by_check,
+            source_drift=self._source_drift(),
+        )
+
+    @staticmethod
+    def _source_drift() -> SourceDriftVM:
+        """Source-level drift is the stakeholder's top operational signal. V1 data
+        (``events_clean``) carries no source/vendor column, so this returns an
+        honest, un-fabricated capability descriptor rather than invented metrics.
+        It flips to ``available=True`` automatically once source metadata lands —
+        the verdict/aggregation machinery already exists and only needs the column.
+        """
+        return SourceDriftVM(
+            available=False,
+            headline=(
+                "Precision over coverage: the most actionable question is not aggregate "
+                "quality but which source/vendor/feed is degrading, and why. That requires a "
+                "source identifier on each event."
+            ),
+            unlocks=(
+                "Per-source trust score and failure rate, ranked worst-first",
+                "Source-level drift — flag the source and the moment it started degrading",
+                "Top failing rule per source, so engineers know where to investigate first",
+            ),
+            activation_note=(
+                "a `source` / `vendor` column is persisted on `events_clean` during ingestion "
+                "(no new judge or pipeline logic needed — verdicts already group by event)."
+            ),
         )
 
     def _rule_stats(

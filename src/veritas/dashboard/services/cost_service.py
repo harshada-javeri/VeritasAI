@@ -5,6 +5,7 @@ from __future__ import annotations
 from veritas.config import Settings, get_settings
 from veritas.dashboard.repositories.cost_repository import CostRepository
 from veritas.dashboard.repositories.event_repository import EventRepository
+from veritas.dashboard.repositories.rows import CheckCost, ModelCost, PromptCost
 from veritas.dashboard.services import formatting as fmt
 from veritas.dashboard.services.scoring import band_for_budget
 from veritas.dashboard.viewmodels.common import Band, MetricVM, MoneyVM, RateVM, Sparkline
@@ -12,6 +13,7 @@ from veritas.dashboard.viewmodels.cost import (
     BudgetVM,
     CheckCostVM,
     CostEfficiencyVM,
+    CostHighlightVM,
     ModelCostVM,
     PromptCostVM,
     TokenVM,
@@ -121,6 +123,51 @@ class CostService:
             escalation_rate=escalation,
             tokens=token_vm,
             efficiency_statement=self._efficiency_statement(event_count, total, per_1k_value),
+            highlights=self._highlights(by_check, by_model, by_prompt),
+        )
+
+    @staticmethod
+    def _highlights(
+        by_check: list[CheckCost],
+        by_model: list[ModelCost],
+        by_prompt: list[PromptCost],
+    ) -> tuple[CostHighlightVM, ...]:
+        """Largest cost drivers — derived from aggregates already fetched above
+        (no extra queries). Each card answers "what is costing money?" directly.
+        """
+        top_check = next((c for c in by_check if c.total_cost > 0.0), None)
+        top_model = next((m for m in by_model if m.total_cost > 0.0), None)
+        top_prompt = max(by_prompt, key=lambda p: p.total_cost, default=None)
+        top_tokens = max(by_prompt, key=lambda p: p.total_input_tokens, default=None)
+        return (
+            CostHighlightVM(
+                label="Largest cost driver",
+                value=top_check.check_name if top_check else "—",
+                detail=fmt.money(top_check.total_cost) if top_check else "no LLM spend yet",
+            ),
+            CostHighlightVM(
+                label="Highest-cost model",
+                value=top_model.model if top_model else "—",
+                detail=(
+                    f"{fmt.money(top_model.total_cost)} · {fmt.money(top_model.avg_cost)}/verdict"
+                    if top_model
+                    else "no LLM spend yet"
+                ),
+            ),
+            CostHighlightVM(
+                label="Highest-cost prompt",
+                value=top_prompt.prompt_version if top_prompt else "—",
+                detail=fmt.money(top_prompt.total_cost) if top_prompt else "no LLM spend yet",
+            ),
+            CostHighlightVM(
+                label="Largest token consumer",
+                value=top_tokens.prompt_version if top_tokens else "—",
+                detail=(
+                    f"{fmt.tokens(top_tokens.total_input_tokens)} in"
+                    if top_tokens
+                    else "no tokens yet"
+                ),
+            ),
         )
 
     def _efficiency_statement(self, event_count: int, total: float, per_1k: float) -> str:

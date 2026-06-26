@@ -13,7 +13,14 @@ _ORDER_OPTIONS = {"Lowest judge confidence": "confidence", "Most recent": "recen
 
 
 def render(build: Callable[[str, str], ReviewQueueVM]) -> None:
-    widgets.workspace_header("Review Viewer", "What requires human intervention?")
+    widgets.workspace_header(
+        "Human Review Queue", "The ambiguous decisions a human owns — not the machine."
+    )
+    st.info(
+        "**Humans own ambiguous decisions.** The system never silently passes an uncertain "
+        "record: rules gate, LLM judges escalate, and anything they can't settle lands here for "
+        "a person to decide. This is the product's backstop, by design."
+    )
 
     left, right = st.columns(2)
     with left:

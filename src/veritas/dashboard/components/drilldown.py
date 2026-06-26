@@ -17,14 +17,42 @@ def render_event_detail(vm: EventDetailVM) -> None:
         return
 
     header = vm.header
-    widgets.band_badge(header.status_band)
     st.markdown(f"### `{header.event_id}`")
+
+    # --- Why this event reached its final state (the debugging focal point) ---
+    if vm.decision is not None:
+        d = vm.decision
+        widgets.hero_score(
+            title="Final decision",
+            score_display=d.final_status.upper(),
+            scale="",
+            band=d.band,
+            explanation=d.rationale,
+        )
+        widgets.metric_grid(
+            [
+                ("Escalated?", "Yes" if d.escalated else "No"),
+                ("Rule outcome", d.rule_outcome),
+                ("LLM outcome", d.llm_outcome),
+                ("Deciding check", d.key_check),
+            ]
+        )
+        widgets.metric_grid(
+            [
+                ("Confidence", d.key_confidence),
+                ("Model", d.key_model),
+                ("Prompt", d.key_prompt_version),
+                ("Cost", vm.cost_summary.display if vm.cost_summary else "—"),
+                ("Latency", d.key_latency),
+            ]
+        )
+        st.caption(d.escalated_display)
+
     widgets.metric_grid(
         [
             ("Status", header.status),
             ("Category", header.category or "—"),
             ("Found at", header.found_at_display),
-            ("Cost", vm.cost_summary.display if vm.cost_summary else "—"),
         ]
     )
     if header.summary:

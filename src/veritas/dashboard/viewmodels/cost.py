@@ -41,6 +41,14 @@ class TokenVM(VM):
     display: str
 
 
+class CostHighlightVM(VM):
+    """One executive emphasis card: what is costing money, at a glance."""
+
+    label: str
+    value: str
+    detail: str
+
+
 class CostEfficiencyVM(VM):
     is_empty: bool
     total_spend: MoneyVM
@@ -53,3 +61,4 @@ class CostEfficiencyVM(VM):
     escalation_rate: RateVM
     tokens: TokenVM
     efficiency_statement: str
+    highlights: tuple[CostHighlightVM, ...] = ()  # largest drivers (executive cards)

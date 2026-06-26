@@ -33,6 +33,17 @@ def render(build: Callable[[], CostEfficiencyVM]) -> None:
         ]
     )
     st.info(vm.efficiency_statement)
+
+    # --- Executive emphasis: where the money goes ----------------------------
+    widgets.section("Where the money goes")
+    widgets.summary_cards([(h.label, h.value, h.detail) for h in vm.highlights])
+
+    if vm.cost_by_check:
+        widgets.section("Top 3 most expensive checks")
+        widgets.table(
+            ["check", "total cost"],
+            [[c.check_name, c.total_display] for c in vm.cost_by_check[:3]],
+        )
     states.note(f"Escalation: {vm.escalation_rate.note}")
 
     left, right = st.columns(2)

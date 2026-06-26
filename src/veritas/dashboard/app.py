@@ -122,7 +122,7 @@ _WORKSPACES = (
     "Trust Center",
     "Cost & Efficiency",
     "Data Quality Intelligence",
-    "Human Review",
+    "Human Review Queue",
     "Platform Health",
     "AI Judge Performance",
     "Event Detail",
@@ -149,7 +149,7 @@ def main() -> None:
         cost_efficiency.render(lambda: vm_cost(dv))
     elif choice == "Data Quality Intelligence":
         quality_intelligence.render(lambda: vm_quality(dv))
-    elif choice == "Human Review":
+    elif choice == "Human Review Queue":
         review_viewer.render(lambda status, order: vm_review(dv, status, order))
     elif choice == "Platform Health":
         platform_health.render(lambda: vm_platform(dv))

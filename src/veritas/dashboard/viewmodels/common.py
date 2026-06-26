@@ -111,3 +111,11 @@ class NamedSeries(VM):
 class TableSizeVM(VM):
     table: str
     rows: int
+
+
+class HighlightVM(VM):
+    """A reusable executive emphasis card: label + big value + supporting detail."""
+
+    label: str
+    value: str
+    detail: str

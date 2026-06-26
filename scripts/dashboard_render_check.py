@@ -30,7 +30,7 @@ WORKSPACES = (
     "Trust Center",
     "Cost & Efficiency",
     "Data Quality Intelligence",
-    "Human Review",
+    "Human Review Queue",
     "Platform Health",
     "AI Judge Performance",
     "Event Detail",

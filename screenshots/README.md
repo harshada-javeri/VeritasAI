@@ -1,13 +1,12 @@
 # Dashboard screenshots
 
-**No screenshot PNGs are committed to this repository — by design.** Capturing them requires a
-headless browser (Playwright + Chromium) that is not part of the dependency set, and committing images
-generated on one machine risks them silently drifting from the live UI. Instead, this repo gives you a
-**one-command, deterministic** way to produce real screenshots yourself, plus a written description of
-what each workspace shows so a reviewer can evaluate the design without running anything.
+This folder holds **real captures of the running dashboard** (`01-trust-center.png` …
+`06-ai-judge-performance.png`), rendered over the deterministic synthetic demo database — no fabricated
+images, no hand-edited numbers. They are embedded in the top-level [README](../README.md#dashboard-decision-intelligence-console).
 
-Everything below runs **offline, with no API keys and no spend** — the dashboard reads a synthetic demo
-database (see [`scripts/seed_demo_db.py`](../scripts/seed_demo_db.py)).
+The capture is **deterministic and reproducible**: the demo seeder uses a fixed RNG seed, so re-running
+the steps below regenerates byte-stable views. Everything runs **offline, with no API keys and no spend**
+— the dashboard reads the synthetic demo database (see [`scripts/seed_demo_db.py`](../scripts/seed_demo_db.py)).
 
 ## Capture them yourself (≈2 minutes)
 
@@ -45,7 +44,7 @@ feed.
 | 1 | **Trust Center** | A transparent quality index — the formula and its inputs, not a single magic number. | "Quality index 0.86 = 83% clean, weighted down by an 11% quarantine rate; here is the arithmetic." |
 | 2 | **Cost & Efficiency** | Spend by model and check, tokens, and the triage savings from the rule gate. | "Quarantined records cost \$0 — the rule gate removed 11% of traffic before any token was spent." |
 | 3 | **Data Quality Intelligence** | Status mix over time, top failing reasons, category breakdown. | "`confidence_floor` and `category_known` drive most quarantines; `date_sanity` is rare." |
-| 4 | **Human Review** | The ambiguous-decision queue — each item with judge verdict, confidence, reason, and evidence. | "Semantic-accuracy `uncertain` verdicts (conf 0.4–0.6) are the bulk of the queue — exactly where humans own the call." |
+| 4 | **Human Review Queue** | The ambiguous-decision queue — each item with judge verdict, confidence, reason, and evidence; leads with "humans own ambiguous decisions." | "Semantic-accuracy `uncertain` verdicts (conf 0.4–0.6) are the bulk of the queue — exactly where humans own the call." |
 | 5 | **Platform Health** | Throughput, provider failure rate, latency distribution. | "Sonnet latency (~1.6s) is ≈2× Haiku (~0.9s) — the cost of escalating only the uncertain check." |
 | 6 | **AI Judge Performance** | Per-check eval scorecards (P/R/F1) with honest small-sample warnings. | "Scorecards carry a small-sample banner (10–12 labels/check) — the judge is *directed*, not *certified*." |
 | 7 | **Event Detail** | Drill-down: one event's full verdict stack, trace, and cost. | "Every aggregate links to a single event — its rule verdicts, LLM verdicts, trace stages, and total cost." |

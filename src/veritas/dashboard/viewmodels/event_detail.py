@@ -40,10 +40,33 @@ class EventHeaderVM(VM):
     status_band: Band
 
 
+class DecisionVM(VM):
+    """Why this event reached its final state — the debugging focal point.
+
+    Everything here is derived from the verdict stack; it makes the routing
+    decision obvious without forcing the reader to reconstruct it row by row.
+    """
+
+    final_status: str
+    band: Band
+    rationale: str
+    escalated: bool
+    escalated_display: str
+    rule_outcome: str
+    llm_outcome: str
+    key_check: str
+    key_confidence: str
+    key_model: str
+    key_prompt_version: str
+    key_cost: str
+    key_latency: str
+
+
 class EventDetailVM(VM):
     event_id: str
     found: bool
     header: EventHeaderVM | None = None
+    decision: DecisionVM | None = None
     verdicts: tuple[VerdictRowVM, ...] = ()
     trace: tuple[TraceRowVM, ...] = ()
     cost_summary: MoneyVM | None = None

@@ -107,21 +107,31 @@ rewrite; the remaining work is operational, not structural.
 
 Full detail: [docs/PRODUCTION_READINESS_REVIEW.md](docs/PRODUCTION_READINESS_REVIEW.md).
 
-# Dashboard
+# Dashboard (Decision Intelligence Console)
 
 A read-only **Decision Intelligence Console** (Streamlit) over the storage layer, with strict layering
 (repository → service → view-model → component → page) and no business logic in the UI. Seven
 workspaces: **Trust Center** (transparent quality index — shows the formula, not a magic number),
-**Cost & Efficiency**, **Data Quality Intelligence**, **Human Review** (the ambiguous-decision queue
-with judge reasoning + evidence), **Platform Health**, **AI Judge Performance** (eval scorecards with
-honest small-sample warnings), and an **Event Detail** drill-down — every aggregate links down to a
-single event's full verdict stack, trace, and cost. Run: `uv run streamlit run src/veritas/dashboard/app.py`.
+**Cost & Efficiency**, **Data Quality Intelligence** (incl. Source Drift Intelligence), **Human Review
+Queue** (the ambiguous-decision queue with judge reasoning + evidence), **Platform Health**, **AI Judge
+Performance** (eval scorecards with honest small-sample warnings), and an **Event Detail** drill-down —
+every aggregate links down to a single event's full verdict stack, trace, and cost.
+Run: `uv run streamlit run src/veritas/dashboard/app.py`.
 
-To see it populated with no API keys or feed, seed the deterministic demo database first
+To reproduce these views with no API keys or feed, seed the deterministic demo database first
 (`uv run python scripts/seed_demo_db.py`, then set `DATABASE_URL` per the [Quickstart](#quickstart-for-reviewers)).
-A per-workspace description, example insights, and a one-command capture process live in
-[screenshots/README.md](screenshots/README.md) — screenshots are produced locally and not committed
-(no fabricated images).
+Per-workspace descriptions, example insights, and the capture process are in
+[screenshots/README.md](screenshots/README.md). The screenshots below are real captures of the running
+dashboard over the synthetic demo data (no fabricated images).
+
+| Workspace | Screenshot |
+|-----------|------------|
+| Trust Center | [![Trust Center](screenshots/01-trust-center.png)](screenshots/01-trust-center.png) |
+| Cost & Efficiency | [![Cost & Efficiency](screenshots/02-cost-efficiency.png)](screenshots/02-cost-efficiency.png) |
+| Data Quality Intelligence | [![Data Quality Intelligence](screenshots/03-data-quality-intelligence.png)](screenshots/03-data-quality-intelligence.png) |
+| Human Review Queue | [![Human Review Queue](screenshots/04-human-review-queue.png)](screenshots/04-human-review-queue.png) |
+| Platform Health | [![Platform Health](screenshots/05-platform-health.png)](screenshots/05-platform-health.png) |
+| AI Judge Performance | [![AI Judge Performance](screenshots/06-ai-judge-performance.png)](screenshots/06-ai-judge-performance.png) |
 
 # Stakeholder Feedback Incorporated
 

@@ -25,6 +25,27 @@ def render(build: Callable[[], QualityIntelligenceVM]) -> None:
         states.empty_state("No rule verdicts recorded yet.")
         return
 
+    # --- Source Drift Intelligence (the stakeholder's #1 operational signal) --
+    widgets.section(
+        "Source Drift Intelligence",
+        caption="Which source/vendor/feed is degrading — and where to investigate first?",
+    )
+    sd = vm.source_drift
+    if sd.available:
+        widgets.table(
+            ["source", "trust", "failure rate", "trend", "top failing rule"],
+            [[r.source, r.trust_display, r.failure_rate_display, r.trend, r.top_failing_rule]
+             for r in sd.rows],
+        )
+    else:
+        states.future_capability(
+            title="Per-source quality & drift detection",
+            summary=sd.headline,
+            unlocks=sd.unlocks,
+            activates_when=sd.activation_note,
+        )
+
+    st.divider()
     st.markdown("#### Rule failures (worst rate first)")
     widgets.table(
         ["rule", "fail rate", "fail", "review", "total", "baseline"],

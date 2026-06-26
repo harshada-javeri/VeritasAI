@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from veritas.dashboard.viewmodels.common import VM, Bucket, Sparkline, TableSizeVM
+from veritas.dashboard.viewmodels.common import (
+    VM,
+    Bucket,
+    HighlightVM,
+    Sparkline,
+    TableSizeVM,
+)
 
 
 class LatencyVM(VM):
@@ -22,3 +28,4 @@ class PlatformHealthVM(VM):
     storage: tuple[TableSizeVM, ...] = ()
     stage_volume: tuple[Bucket, ...] = ()
     unavailable_note: str
+    highlights: tuple[HighlightVM, ...] = ()

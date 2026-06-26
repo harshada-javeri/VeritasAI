@@ -241,7 +241,4 @@ __pycache__/
 # Local SQLite database produced by the pipeline or the demo seeder.
 veritas.db
 veritas-demo.db
-# Dashboard screenshots are captured locally by the reviewer (synthetic demo
-# data); see screenshots/README.md. PNGs are not committed.
-screenshots/*.png
 .DS_Store

@@ -8,7 +8,7 @@
 #   01-trust-center.png
 #   02-cost-efficiency.png
 #   03-data-quality-intelligence.png
-#   04-human-review.png
+#   04-human-review-queue.png
 #   05-platform-health.png
 #   06-ai-judge-performance.png
 #   07-event-detail.png
@@ -36,7 +36,7 @@ views = [
     ("01-trust-center", "Trust Center"),
     ("02-cost-efficiency", "Cost & Efficiency"),
     ("03-data-quality-intelligence", "Data Quality Intelligence"),
-    ("04-human-review", "Human Review"),
+    ("04-human-review-queue", "Human Review Queue"),
     ("05-platform-health", "Platform Health"),
     ("06-ai-judge-performance", "AI Judge Performance"),
     ("07-event-detail", "Event Detail"),

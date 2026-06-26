@@ -86,6 +86,7 @@ class TrustService:
             "judge confidence", self._verdicts.confidence_histogram("llm")
         )
         drivers = self._drivers()
+        headline = self._headline(index.value, clean_rate, total, drivers)
 
         return TrustCenterVM(
             is_empty=False,
@@ -99,7 +100,26 @@ class TrustService:
                 severity=severity,
                 reason=f"trust index {index.value:.1f}/100 — {severity}",
             ),
+            headline=headline,
         )
+
+    @staticmethod
+    def _headline(
+        index_value: float, clean_rate: float, total: int, drivers: tuple[DriverVM, ...]
+    ) -> str:
+        verdict = {
+            "trusted": "Safe to consume downstream.",
+            "caution": "Usable with review of the flagged records.",
+            "blocked": "Hold downstream consumption until resolved.",
+        }[band_for_index(index_value)]
+        lead = (
+            f"{fmt.pct(clean_rate)} of {fmt.count(total)} events passed every check at $0. "
+            f"{verdict}"
+        )
+        if drivers:
+            top = drivers[0]
+            lead += f" Largest detractor: {top.check_name} ({top.verdict}, {fmt.count(top.count)})."
+        return lead
 
     def _integrity(self) -> tuple[float, MetricVM]:
         rows = [r for r in self._verdicts.breakdown() if r.check_name == "referential_integrity"]
